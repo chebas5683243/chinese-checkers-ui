@@ -1,8 +1,13 @@
 export interface Move {
   id: string;
   gameId: string;
-  q: number;
-  r: number;
+  from: HexCoordinates;
+  steps: HexCoordinates[];
   order: number;
   createdAt: number;
+}
+
+export interface HexCoordinates {
+  q: number;
+  r: number;
 }
