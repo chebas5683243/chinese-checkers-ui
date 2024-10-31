@@ -42,6 +42,7 @@ export function Slot({
         },
       )}
     >
+      <span style={{ fontSize: "4px" }}>{`${hexCoords.r},${hexCoords.q}`}</span>
       {isSelected && <div className="size-1 bg-purple-600 rounded-full" />}
     </button>
   );

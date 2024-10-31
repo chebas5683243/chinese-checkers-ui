@@ -1,4 +1,6 @@
+import { createHex } from "./hex";
 import { GROUP_COORDINATES, SLOTS_PER_ROW } from "@/lib/constants";
+import { HexCoordinates } from "@/models/move";
 
 interface Slot {
   id: string;
@@ -8,16 +10,21 @@ interface Slot {
 
 type Board = (Slot | null)[][];
 
+function createEmptySlot(hexCoords: HexCoordinates): Slot {
+  return {
+    isEmpty: true,
+    id: `${hexCoords.r}-${hexCoords.q}`,
+  };
+}
+
 function initializeSlots() {
   const board = Array.from({ length: 17 }, () => Array(17).fill(null)) as Board;
 
   Object.entries(SLOTS_PER_ROW).forEach(([rowStr, [start, end]]) => {
     const row = Number(rowStr);
     for (let col = start; col <= end; col += 1) {
-      board[row][col] = {
-        isEmpty: true,
-        id: `${row}-${col}`,
-      };
+      const hexCoords = createHex(row, col);
+      board[row][col] = createEmptySlot(hexCoords);
     }
   });
 
@@ -52,4 +59,4 @@ function initializeBoard(groups: number[]) {
   return filledBoard;
 }
 
-export { type Board, type Slot, initializeBoard };
+export { type Board, type Slot, initializeBoard, createEmptySlot };

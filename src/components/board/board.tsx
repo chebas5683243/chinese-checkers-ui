@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 import { Slot } from "@/components/board/slot";
-import { isRepeatedStep, isStepValid } from "@/helpers/move";
+import { getMoveLastStep, isRepeatedStep, isStepValid } from "@/helpers/move";
 import { useGame } from "@/hooks/use-game-store";
 import { HexCoordinates } from "@/models/move";
 
@@ -15,6 +15,7 @@ export function Board() {
     updateMove,
     currentMove,
     confirmMove,
+    moves,
   } = useGame();
 
   useEffect(() => {
@@ -25,66 +26,77 @@ export function Board() {
     return <div>Cargando</div>;
   }
 
-  // function animateStep(from: HexCoordinates, to: HexCoordinates) {
-  //   const fromSlot = document.getElementById(`Slot ${from.r},${from.q}`);
-  //   const toSlot = document.getElementById(`Slot ${to.r},${to.q}`);
+  async function animateStep(from: HexCoordinates, to: HexCoordinates) {
+    const fromSlot = document.getElementById(`Slot ${from.r},${from.q}`);
+    const toSlot = document.getElementById(`Slot ${to.r},${to.q}`);
 
-  //   if (!fromSlot || !toSlot) return;
+    if (!fromSlot || !toSlot) return;
 
-  //   const fromSlotRect = fromSlot.getBoundingClientRect();
-  //   const toSlotRect = toSlot.getBoundingClientRect();
+    const fromSlotRect = fromSlot.getBoundingClientRect();
+    const toSlotRect = toSlot.getBoundingClientRect();
 
-  //   const deltaX = toSlotRect.x - fromSlotRect.x;
-  //   const deltaY = toSlotRect.y - fromSlotRect.y;
+    const deltaX = toSlotRect.x - fromSlotRect.x;
+    const deltaY = toSlotRect.y - fromSlotRect.y;
 
-  //   fromSlot.animate(
-  //     [
-  //       { transform: `translate(0px, 0px)` },
-  //       { transform: `translate(${deltaX}px, ${deltaY}px)` },
-  //     ],
-  //     {
-  //       duration: 500,
-  //       easing: "ease-in-out",
-  //     },
-  //   );
-  // }
+    const animation = fromSlot.animate(
+      [
+        { transform: `scale(1) translate(0px, 0px)` },
+        { transform: `scale(1.5) translate(${deltaX / 4}px, ${deltaY / 4}px)` },
+        { transform: `scale(1) translate(${deltaX}px, ${deltaY}px)` },
+      ],
+      {
+        duration: 1000,
+        easing: "ease",
+      },
+    );
 
-  function checkIfStepIsValid(hexCoords: HexCoordinates) {
-    if (!currentMove) {
+    await animation.finished;
+  }
+
+  function checkIfStepIsValid(hexCoords: HexCoordinates): {
+    isValid: boolean;
+    needsAnimation: boolean;
+    lastStep?: HexCoordinates;
+  } {
+    const isFirstStep = !currentMove;
+
+    if (isFirstStep) {
       return {
         isValid: true,
-        isRepeated: false,
+        needsAnimation: false,
       };
     }
 
-    if (isRepeatedStep(currentMove.from, currentMove.steps, hexCoords)) {
+    const isRepeated = isRepeatedStep(
+      currentMove.from,
+      currentMove.steps,
+      hexCoords,
+    );
+
+    if (isRepeated) {
       return {
         isValid: true,
-        isRepeated: true,
+        needsAnimation: false,
       };
     }
 
-    const lastStep =
-      currentMove.steps[currentMove.steps.length - 1] ?? currentMove.from;
+    const lastStep = getMoveLastStep(currentMove);
 
     return {
       isValid: isStepValid(board!, lastStep, hexCoords),
-      isRepeated: false,
+      lastStep,
+      needsAnimation: true,
     };
   }
 
-  function onSlotClick(isLastStep: boolean, hexCoords: HexCoordinates) {
-    const { isValid } = checkIfStepIsValid(hexCoords);
+  async function onSlotClick(isLastStep: boolean, hexCoords: HexCoordinates) {
+    const { isValid, needsAnimation, lastStep } = checkIfStepIsValid(hexCoords);
 
     if (!isValid) return;
 
-    // const lastStep =
-    //   currentMove?.steps[currentMove.steps.length - 1] ?? currentMove?.from;
-
-    // if (!isRepeated && currentMove && lastStep) {
-    //   console.log(lastStep, hexCoords);
-    //   animateStep(lastStep, hexCoords);
-    // }
+    if (needsAnimation && lastStep) {
+      await animateStep(lastStep, hexCoords);
+    }
 
     if (isLastStep) {
       confirmMove();
@@ -128,6 +140,13 @@ export function Board() {
           })}
         </div>
       ))}
+      <div>Moves</div>
+      <div>
+        {moves?.map((mv) => (
+          <div key={mv.id}>{`${mv.from.q} - ${mv.from.r}`}</div>
+        ))}
+      </div>
+      <div>Current Move</div>
       <div>{`${currentMove?.from.q} - ${currentMove?.from.r}`}</div>
       <div>Steps</div>
       <div>

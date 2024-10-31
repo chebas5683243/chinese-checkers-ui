@@ -1,6 +1,6 @@
 import { Board } from "./board";
 import { hexCompare, hexDivide, hexSubtract } from "./hex";
-import { HexCoordinates } from "@/models/move";
+import { HexCoordinates, Move } from "@/models/move";
 
 const AXIAL_DIRECTION_VECTORS = [
   { r: 1, q: 0 },
@@ -47,9 +47,16 @@ export function isStepValid(
 
   if (!intermediateDirectionVector) return false;
 
-  const intermediateSlot = board[from.r + halfDelta.r][from.q + halfDelta.q];
+  const intermediateHexCoords = hexSubtract(from, halfDelta);
+
+  const intermediateSlot =
+    board[intermediateHexCoords.r][intermediateHexCoords.q];
 
   if (!intermediateSlot || intermediateSlot.isEmpty) return false;
 
   return true;
+}
+
+export function getMoveLastStep(move: Move) {
+  return move.steps[move.steps.length - 1] ?? move.from;
 }

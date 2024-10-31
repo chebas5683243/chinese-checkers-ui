@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import { Board, initializeBoard } from "@/helpers/board";
+import { Board, createEmptySlot, initializeBoard } from "@/helpers/board";
 import { hexCompare } from "@/helpers/hex";
 import { HexCoordinates, Move } from "@/models/move";
 
@@ -67,6 +67,7 @@ export const useGame = create<GameStore>()(
     updateMove: (newStep: HexCoordinates) => {
       set((state) => {
         if (!state.moves) return;
+        if (!state.board) return;
 
         if (!state.currentMove) {
           state.currentMove = {
@@ -81,6 +82,17 @@ export const useGame = create<GameStore>()(
         }
 
         const { steps } = state.currentMove;
+
+        const lastStep = steps[steps.length - 1] ?? state.currentMove.from;
+
+        const fromSlot = state.board[lastStep.r][lastStep.q];
+
+        state.board[lastStep.r][lastStep.q] = createEmptySlot(lastStep);
+        state.board[newStep.r][newStep.q] = {
+          isEmpty: fromSlot!.isEmpty,
+          group: fromSlot!.group,
+          id: `${newStep.r}-${newStep.q}`,
+        };
 
         if (hexCompare(state.currentMove.from, newStep)) {
           if (steps.length === 0) {
@@ -98,6 +110,7 @@ export const useGame = create<GameStore>()(
 
         if (previuousIndex !== -1) {
           state.currentMove.steps = steps.slice(0, previuousIndex + 1);
+
           return;
         }
 
