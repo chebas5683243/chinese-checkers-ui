@@ -1,4 +1,5 @@
 import type { Slot as ISlot } from "@/helpers/board";
+import { printHex } from "@/helpers/hex";
 import { cn } from "@/lib/utils";
 import { HexCoordinates } from "@/models/move";
 
@@ -42,7 +43,7 @@ export function Slot({
         },
       )}
     >
-      <span style={{ fontSize: "4px" }}>{`${hexCoords.r},${hexCoords.q}`}</span>
+      <span style={{ fontSize: "4px" }}>{printHex(hexCoords)}</span>
       {isSelected && <div className="size-1 bg-purple-600 rounded-full" />}
     </button>
   );
