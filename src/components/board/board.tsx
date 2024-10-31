@@ -3,7 +3,13 @@
 import { useEffect } from "react";
 
 import { Slot } from "@/components/board/slot";
-import { getMoveLastStep, isRepeatedStep, isStepValid } from "@/helpers/move";
+import { animateStepMovement } from "@/helpers/animations";
+import { createHex } from "@/helpers/hex";
+import {
+  checkIfSlotInPath,
+  checkIfIsLastStep,
+  getStepValidationInformation,
+} from "@/helpers/move";
 import { useGame } from "@/hooks/use-game-store";
 import { HexCoordinates } from "@/models/move";
 
@@ -22,80 +28,20 @@ export function Board() {
     startGame();
   }, [startGame]);
 
-  if (isCreatingGame || !board) {
-    return <div>Cargando</div>;
-  }
-
-  async function animateStep(from: HexCoordinates, to: HexCoordinates) {
-    const fromSlot = document.getElementById(`Slot ${from.r},${from.q}`);
-    const toSlot = document.getElementById(`Slot ${to.r},${to.q}`);
-
-    if (!fromSlot || !toSlot) return;
-
-    const fromSlotRect = fromSlot.getBoundingClientRect();
-    const toSlotRect = toSlot.getBoundingClientRect();
-
-    const deltaX = toSlotRect.x - fromSlotRect.x;
-    const deltaY = toSlotRect.y - fromSlotRect.y;
-
-    const animation = fromSlot.animate(
-      [
-        { transform: `scale(1) translate(0px, 0px)` },
-        { transform: `scale(1.5) translate(${deltaX / 4}px, ${deltaY / 4}px)` },
-        { transform: `scale(1) translate(${deltaX}px, ${deltaY}px)` },
-      ],
-      {
-        duration: 1000,
-        easing: "ease",
-      },
+  async function onSlotClick(
+    isLastStep: boolean,
+    selectedHexCoords: HexCoordinates,
+  ) {
+    const { isValid, needsAnimation, lastStep } = getStepValidationInformation(
+      board,
+      currentMove,
+      selectedHexCoords,
     );
-
-    await animation.finished;
-  }
-
-  function checkIfStepIsValid(hexCoords: HexCoordinates): {
-    isValid: boolean;
-    needsAnimation: boolean;
-    lastStep?: HexCoordinates;
-  } {
-    const isFirstStep = !currentMove;
-
-    if (isFirstStep) {
-      return {
-        isValid: true,
-        needsAnimation: false,
-      };
-    }
-
-    const isRepeated = isRepeatedStep(
-      currentMove.from,
-      currentMove.steps,
-      hexCoords,
-    );
-
-    if (isRepeated) {
-      return {
-        isValid: true,
-        needsAnimation: false,
-      };
-    }
-
-    const lastStep = getMoveLastStep(currentMove);
-
-    return {
-      isValid: isStepValid(board!, lastStep, hexCoords),
-      lastStep,
-      needsAnimation: true,
-    };
-  }
-
-  async function onSlotClick(isLastStep: boolean, hexCoords: HexCoordinates) {
-    const { isValid, needsAnimation, lastStep } = checkIfStepIsValid(hexCoords);
 
     if (!isValid) return;
 
     if (needsAnimation && lastStep) {
-      await animateStep(lastStep, hexCoords);
+      await animateStepMovement(lastStep, selectedHexCoords);
     }
 
     if (isLastStep) {
@@ -103,7 +49,11 @@ export function Board() {
       return;
     }
 
-    updateMove(hexCoords);
+    updateMove(selectedHexCoords);
+  }
+
+  if (isCreatingGame || !board) {
+    return <div>Cargando</div>;
   }
 
   return (
@@ -117,23 +67,17 @@ export function Board() {
           {row.map((slot, qIndex) => {
             if (!slot) return null;
 
-            const steps = currentMove?.steps;
-            const isSelected = !!steps?.some(
-              (step) => step.q === qIndex && step.r === rIndex,
-            );
-
-            const lastStep = steps?.[steps.length - 1];
-            const isLastStep = lastStep?.q === qIndex && lastStep?.r === rIndex;
-
-            const hexCoords = { r: rIndex, q: qIndex };
+            const hexCoords = createHex(rIndex, qIndex);
+            const isSlotInPath = checkIfSlotInPath(currentMove, hexCoords);
+            const isLastStep = checkIfIsLastStep(currentMove, hexCoords);
 
             return (
               <Slot
                 key={slot.id}
                 slot={slot}
                 onClick={() => onSlotClick(isLastStep, hexCoords)}
-                hexCoords={{ r: rIndex, q: qIndex }}
-                isSelected={isSelected}
+                hexCoords={hexCoords}
+                isInCurrentPath={isSlotInPath}
                 isLastStep={isLastStep}
               />
             );

@@ -1,5 +1,5 @@
 import { createHex } from "./hex";
-import { GROUP_COORDINATES, SLOTS_PER_ROW } from "@/lib/constants";
+import { GROUP_COORDINATES, SLOTS_PER_ROW } from "@/constants/board";
 import { HexCoordinates } from "@/models/move";
 
 interface Slot {
