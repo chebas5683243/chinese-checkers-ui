@@ -1,25 +1,22 @@
 import { getPieceId, getSlotId } from "./slot";
 import { Z_INDEX_MOVING_PIECE } from "@/constants/z-indexes";
-import { HexCoordinates } from "@/models/move";
+import { HexCoordinates } from "@/models/turn";
 
-export async function animateStepMovement(
-  from: HexCoordinates,
-  to: HexCoordinates,
-) {
-  const fromSlot = document.getElementById(getPieceId(from));
-  const toSlot = document.getElementById(getSlotId(to));
+export async function animateMove(from: HexCoordinates, to: HexCoordinates) {
+  const piece = document.getElementById(getPieceId(from));
+  const slot = document.getElementById(getSlotId(to));
 
-  if (!fromSlot || !toSlot) return;
+  if (!piece || !slot) return;
 
-  fromSlot.style.zIndex = Z_INDEX_MOVING_PIECE.toString();
+  piece.style.zIndex = Z_INDEX_MOVING_PIECE.toString();
 
-  const fromSlotRect = fromSlot.getBoundingClientRect();
-  const toSlotRect = toSlot.getBoundingClientRect();
+  const pieceRect = piece.getBoundingClientRect();
+  const slotRect = slot.getBoundingClientRect();
 
-  const deltaX = toSlotRect.x - fromSlotRect.x;
-  const deltaY = toSlotRect.y - fromSlotRect.y;
+  const deltaX = slotRect.x - pieceRect.x;
+  const deltaY = slotRect.y - pieceRect.y;
 
-  const animation = fromSlot.animate(
+  const animation = piece.animate(
     [
       { transform: `scale(1) translate(0px, 0px)` },
       { transform: `scale(1.5) translate(${deltaX / 4}px, ${deltaY / 4}px)` },

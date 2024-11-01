@@ -1,44 +1,49 @@
 import { Board } from "./board";
 import { hexCompare, hexDivide, hexSubtract } from "./hex";
-import { AXIAL_DIRECTION_VECTORS } from "@/constants/axial-directions";
-import { HexCoordinates, Move } from "@/models/move";
+import { HEX_DIRECTION_VECTORS } from "@/constants/hex-directions";
+import { HexCoordinates, Turn } from "@/models/turn";
 
 export function checkIfSlotInPath(
-  move: Move | undefined,
-  step: HexCoordinates,
+  turn: Turn | undefined,
+  slot: HexCoordinates,
 ) {
-  const fullSteps = getFullSteps(move);
-  return fullSteps.some((s) => hexCompare(s, step));
+  const fullMoves = getFullMoves(turn);
+  return fullMoves.some((move) => hexCompare(move, slot));
 }
 
-function getFullSteps(move: Move | undefined): HexCoordinates[] {
-  if (!move) return [];
+function getFullMoves(turn: Turn | undefined): HexCoordinates[] {
+  if (!turn) return [];
 
-  const stepsToMerge = move.steps ?? [];
-  const fromToMerge = move.from ? [move.from] : [];
+  const movesToMerge = turn.moves ?? [];
+  const fromToMerge = turn.from ? [turn.from] : [];
 
-  return [...fromToMerge, ...stepsToMerge];
+  return [...fromToMerge, ...movesToMerge];
 }
 
-export function getStepValidationInformation(
+// function getAllowedMovesTypeFromTurn(currentTurn: Turn | undefined): {
+//   canHop: boolean;
+//   canMove: boolean;
+// } {}
+
+export function getMoveValidationInformation(
   board: Board | undefined,
-  currentMove: Move | undefined,
-  stepToGo: HexCoordinates,
+  currentTurn: Turn | undefined,
+  slotToGo: HexCoordinates,
 ): {
   isValid: boolean;
   needsAnimation: boolean;
-  lastStep?: HexCoordinates;
+  lastMove?: HexCoordinates;
 } {
-  const isFirstStep = !currentMove;
+  const isInitializingTurn = !currentTurn;
 
-  if (isFirstStep) {
+  if (isInitializingTurn) {
     return {
       isValid: true,
       needsAnimation: false,
     };
   }
 
-  const isSlotInPath = checkIfSlotInPath(currentMove, stepToGo);
+  const isSlotInPath = checkIfSlotInPath(currentTurn, slotToGo);
 
   if (isSlotInPath) {
     return {
@@ -47,16 +52,16 @@ export function getStepValidationInformation(
     };
   }
 
-  const lastStep = getMoveLastStep(currentMove);
+  const lastMove = getTurnLastMove(currentTurn);
 
   return {
-    isValid: isStepValid(board, lastStep, stepToGo),
-    lastStep,
+    isValid: isMoveValid(board, lastMove, slotToGo),
+    lastMove,
     needsAnimation: true,
   };
 }
 
-function isStepValid(
+function isMoveValid(
   board: Board | undefined,
   from: HexCoordinates | undefined,
   to: HexCoordinates | undefined,
@@ -71,7 +76,7 @@ function isStepValid(
 
   const delta = hexSubtract(from, to);
 
-  const directionVector = AXIAL_DIRECTION_VECTORS.find((v) =>
+  const directionVector = HEX_DIRECTION_VECTORS.find((v) =>
     hexCompare(v, delta),
   );
 
@@ -79,11 +84,11 @@ function isStepValid(
 
   const halfDelta = hexDivide(delta, 2);
 
-  const intermediateDirectionVector = AXIAL_DIRECTION_VECTORS.find((v) =>
+  const isHoppingMove = HEX_DIRECTION_VECTORS.some((v) =>
     hexCompare(v, halfDelta),
   );
 
-  if (!intermediateDirectionVector) return false;
+  if (!isHoppingMove) return false;
 
   const intermediateHexCoords = hexSubtract(from, halfDelta);
 
@@ -95,15 +100,15 @@ function isStepValid(
   return true;
 }
 
-function getMoveLastStep(move: Move | undefined): HexCoordinates | undefined {
-  if (!move) return undefined;
-  return move.steps[move.steps.length - 1] ?? move.from;
+export function getTurnLastMove(turn: Turn | undefined) {
+  if (!turn) return undefined;
+  return turn.moves[turn.moves.length - 1] ?? turn.from;
 }
 
-export function checkIfIsLastStep(
-  move: Move | undefined,
-  step: HexCoordinates,
+export function checkIfIsLastMove(
+  turn: Turn | undefined,
+  move: HexCoordinates,
 ) {
-  const lastStep = getMoveLastStep(move);
-  return hexCompare(lastStep, step);
+  const lastMove = getTurnLastMove(turn);
+  return hexCompare(lastMove, move);
 }

@@ -1,7 +1,8 @@
 /* eslint-disable no-param-reassign */
 import { Board, createEmptySlot, initializeBoard } from "@/helpers/board";
 import { hexCompare } from "@/helpers/hex";
-import { HexCoordinates, Move } from "@/models/move";
+import { getTurnLastMove } from "@/helpers/move";
+import { HexCoordinates, Turn } from "@/models/turn";
 
 import { v4 as uuidv4 } from "uuid";
 import { create } from "zustand";
@@ -10,37 +11,38 @@ import { immer } from "zustand/middleware/immer";
 interface GameState {
   board: Board;
   players: string[];
-  moves: Move[];
-  currentMove: Move;
+  turns: Turn[];
+  currentTurn: Turn;
   playerTurn: string;
   isCreatingGame: boolean;
 }
 
 interface GameStore extends Partial<GameState> {
   start: () => void;
-  confirmMove: (incomingMove?: Move) => void;
-  cancelMove: () => void;
-  updateMove: (slot: HexCoordinates) => void;
+  confirmTurnMoves: (incomingTurn?: Turn) => void;
+  cancelTurnMoves: () => void;
+  updateTurnMoves: (slot: HexCoordinates) => void;
 }
 
 export const useGame = create<GameStore>()(
   immer((set) => ({
+    // Default state
     isCreatingGame: true,
 
     start: () => {
       set((state) => {
         state.board = initializeBoard([1, 4]);
         state.players = ["123", "456"];
-        state.moves = [];
+        state.turns = [];
         state.playerTurn = "123";
         state.isCreatingGame = false;
       });
     },
 
-    confirmMove: (incomingMove?: Move) => {
+    confirmTurnMoves: (incomingTurn?: Turn) => {
       set((state) => {
-        if (!state.currentMove) return;
-        if (!state.moves) return;
+        if (!state.currentTurn) return;
+        if (!state.turns) return;
         if (!state.players) return;
         if (!state.playerTurn) return;
 
@@ -50,71 +52,70 @@ export const useGame = create<GameStore>()(
             ? 0
             : currentPlayerIndex + 1;
 
-        const move = incomingMove ?? state.currentMove;
+        const turn = incomingTurn ?? state.currentTurn;
 
-        state.moves = [...state.moves, move];
-        state.currentMove = undefined;
+        state.turns = [...state.turns, turn];
+        state.currentTurn = undefined;
         state.playerTurn = state.players[nextPlayerIndex];
       });
     },
 
-    cancelMove: () => {
+    cancelTurnMoves: () => {
       set((state) => {
-        state.currentMove = undefined;
+        state.currentTurn = undefined;
       });
     },
 
-    updateMove: (newStep: HexCoordinates) => {
+    updateTurnMoves: (selectedSlot: HexCoordinates) => {
       set((state) => {
-        if (!state.moves) return;
+        if (!state.turns) return;
         if (!state.board) return;
 
-        if (!state.currentMove) {
-          state.currentMove = {
+        if (!state.currentTurn) {
+          state.currentTurn = {
             id: uuidv4(),
             gameId: "123",
             createdAt: new Date().getTime(),
-            from: newStep,
-            order: state.moves.length + 1,
-            steps: [],
+            from: selectedSlot,
+            order: state.turns.length + 1,
+            moves: [],
           };
           return;
         }
 
-        const { steps } = state.currentMove;
+        const { moves } = state.currentTurn;
 
-        const lastStep = steps[steps.length - 1] ?? state.currentMove.from;
+        const lastMove = getTurnLastMove(state.currentTurn)!;
 
-        const fromSlot = state.board[lastStep.r][lastStep.q];
+        const initialSlot = state.board[lastMove.r][lastMove.q];
 
-        state.board[lastStep.r][lastStep.q] = createEmptySlot(lastStep);
-        state.board[newStep.r][newStep.q] = {
-          isEmpty: fromSlot!.isEmpty,
-          group: fromSlot!.group,
-          id: `${newStep.r}-${newStep.q}`,
+        state.board[lastMove.r][lastMove.q] = createEmptySlot(lastMove);
+        state.board[selectedSlot.r][selectedSlot.q] = {
+          isEmpty: initialSlot!.isEmpty,
+          group: initialSlot!.group,
+          id: `${selectedSlot.r}-${selectedSlot.q}`,
         };
 
-        if (hexCompare(state.currentMove.from, newStep)) {
-          if (steps.length === 0) {
-            state.currentMove = undefined;
+        if (hexCompare(state.currentTurn.from, selectedSlot)) {
+          if (moves.length === 0) {
+            state.currentTurn = undefined;
             return;
           }
 
-          state.currentMove.steps = [];
+          state.currentTurn.moves = [];
           return;
         }
 
-        const previuousIndex = steps.findIndex((step) =>
-          hexCompare(step, newStep),
+        const previuousIndex = moves.findIndex((move) =>
+          hexCompare(move, selectedSlot),
         );
 
         if (previuousIndex !== -1) {
-          state.currentMove.steps = steps.slice(0, previuousIndex + 1);
-
+          state.currentTurn.moves = moves.slice(0, previuousIndex + 1);
           return;
         }
 
-        state.currentMove.steps = [...state.currentMove.steps, newStep];
+        state.currentTurn.moves = [...state.currentTurn.moves, selectedSlot];
       });
     },
   })),

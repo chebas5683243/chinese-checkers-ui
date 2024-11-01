@@ -2,7 +2,7 @@ type RowRange = [number, number];
 type RowsRange = Record<number, RowRange>;
 type GroupsRowRange = Record<number, RowsRange>;
 
-export const AXIAL_COORDINATES_OFFSET = [8, 8];
+export const HEX_COORDINATES_OFFSET = [8, 8];
 
 /**
  * Slots per row

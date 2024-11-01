@@ -1,8 +1,8 @@
-export interface Move {
+export interface Turn {
   id: string;
   gameId: string;
   from: HexCoordinates;
-  steps: HexCoordinates[];
+  moves: HexCoordinates[];
   order: number;
   createdAt: number;
 }

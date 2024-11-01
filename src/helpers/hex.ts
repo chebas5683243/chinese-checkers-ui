@@ -1,4 +1,4 @@
-import { HexCoordinates } from "@/models/move";
+import { HexCoordinates } from "@/models/turn";
 
 export function createHex(r: number, q: number): HexCoordinates {
   return { q, r };

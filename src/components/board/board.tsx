@@ -3,25 +3,25 @@
 import { useEffect } from "react";
 
 import { Slot } from "@/components/board/slot";
-import { animateStepMovement } from "@/helpers/animations";
+import { animateMove } from "@/helpers/animations";
 import { createHex } from "@/helpers/hex";
 import {
   checkIfSlotInPath,
-  checkIfIsLastStep,
-  getStepValidationInformation,
+  checkIfIsLastMove,
+  getMoveValidationInformation,
 } from "@/helpers/move";
 import { useGame } from "@/hooks/use-game-store";
-import { HexCoordinates } from "@/models/move";
+import { HexCoordinates } from "@/models/turn";
 
 export function Board() {
   const {
     start: startGame,
     isCreatingGame,
     board,
-    updateMove,
-    currentMove,
-    confirmMove,
-    moves,
+    updateTurnMoves,
+    currentTurn,
+    confirmTurnMoves,
+    turns,
   } = useGame();
 
   useEffect(() => {
@@ -29,27 +29,27 @@ export function Board() {
   }, [startGame]);
 
   async function onSlotClick(
-    isLastStep: boolean,
-    selectedHexCoords: HexCoordinates,
+    isLastMove: boolean,
+    selectedSlot: HexCoordinates,
   ) {
-    const { isValid, needsAnimation, lastStep } = getStepValidationInformation(
+    const { isValid, needsAnimation, lastMove } = getMoveValidationInformation(
       board,
-      currentMove,
-      selectedHexCoords,
+      currentTurn,
+      selectedSlot,
     );
 
     if (!isValid) return;
 
-    if (needsAnimation && lastStep) {
-      await animateStepMovement(lastStep, selectedHexCoords);
+    if (needsAnimation && lastMove) {
+      await animateMove(lastMove, selectedSlot);
     }
 
-    if (isLastStep) {
-      confirmMove();
+    if (isLastMove) {
+      confirmTurnMoves();
       return;
     }
 
-    updateMove(selectedHexCoords);
+    updateTurnMoves(selectedSlot);
   }
 
   if (isCreatingGame || !board) {
@@ -68,34 +68,34 @@ export function Board() {
             if (!slot) return null;
 
             const hexCoords = createHex(rIndex, qIndex);
-            const isSlotInPath = checkIfSlotInPath(currentMove, hexCoords);
-            const isLastStep = checkIfIsLastStep(currentMove, hexCoords);
+            const isSlotInPath = checkIfSlotInPath(currentTurn, hexCoords);
+            const isLastMove = checkIfIsLastMove(currentTurn, hexCoords);
 
             return (
               <Slot
                 key={slot.id}
                 slot={slot}
-                onClick={() => onSlotClick(isLastStep, hexCoords)}
+                onClick={() => onSlotClick(isLastMove, hexCoords)}
                 hexCoords={hexCoords}
                 isInCurrentPath={isSlotInPath}
-                isLastStep={isLastStep}
+                isLastMove={isLastMove}
               />
             );
           })}
         </div>
       ))}
-      <div>Moves</div>
+      <div>Turns</div>
       <div>
-        {moves?.map((mv) => (
-          <div key={mv.id}>{`${mv.from.q} - ${mv.from.r}`}</div>
+        {turns?.map((turn) => (
+          <div key={turn.id}>{`${turn.from.q} - ${turn.from.r}`}</div>
         ))}
       </div>
       <div>Current Move</div>
-      <div>{`${currentMove?.from.q} - ${currentMove?.from.r}`}</div>
-      <div>Steps</div>
+      <div>{`${currentTurn?.from.q} - ${currentTurn?.from.r}`}</div>
+      <div>Moves</div>
       <div>
-        {currentMove?.steps.map((step) => (
-          <div key={`${step.q} - ${step.r}`}>{`${step.q} - ${step.r}`}</div>
+        {currentTurn?.moves.map((move) => (
+          <div key={`${move.q} - ${move.r}`}>{`${move.q} - ${move.r}`}</div>
         ))}
       </div>
     </div>

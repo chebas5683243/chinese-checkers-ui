@@ -3,14 +3,14 @@ import type { Slot as ISlot } from "@/helpers/board";
 import { printHex } from "@/helpers/hex";
 import { getPieceId, getSlotId } from "@/helpers/slot";
 import { cn } from "@/lib/utils";
-import { HexCoordinates } from "@/models/move";
+import { HexCoordinates } from "@/models/turn";
 
 interface SlotProps {
   slot: ISlot;
   isInCurrentPath: boolean;
   onClick: () => void;
   hexCoords: HexCoordinates;
-  isLastStep: boolean;
+  isLastMove: boolean;
 }
 
 export function Slot({
@@ -18,7 +18,7 @@ export function Slot({
   isInCurrentPath,
   onClick,
   hexCoords,
-  isLastStep,
+  isLastMove,
 }: SlotProps) {
   const pieceId = getPieceId(hexCoords);
   const slotId = getSlotId(hexCoords);
@@ -56,7 +56,7 @@ export function Slot({
             "hover:ring-2 hover:ring-purple-300",
             {
               "ring sm:ring-2 ring-purple-600 hover:ring-purple-600":
-                isLastStep,
+                isLastMove,
             },
             {
               "bg-red-sphere": slot.group === 1,

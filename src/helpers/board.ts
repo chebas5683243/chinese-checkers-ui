@@ -1,6 +1,6 @@
 import { createHex } from "./hex";
 import { GROUP_COORDINATES, SLOTS_PER_ROW } from "@/constants/board";
-import { HexCoordinates } from "@/models/move";
+import { HexCoordinates } from "@/models/turn";
 
 interface Slot {
   id: string;
