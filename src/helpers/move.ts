@@ -20,10 +20,25 @@ function getFullMoves(turn: Turn | undefined): HexCoordinates[] {
   return [...fromToMerge, ...movesToMerge];
 }
 
-// function getAllowedMovesTypeFromTurn(currentTurn: Turn | undefined): {
-//   canHop: boolean;
-//   canMove: boolean;
-// } {}
+function getAllowedMovesTypeFromTurn(currentTurn: Turn | undefined): {
+  canHop: boolean;
+  canSingleStep: boolean;
+} {
+  if (!currentTurn) return { canHop: true, canSingleStep: true };
+
+  const fromStep = currentTurn.from;
+  const firstStep = currentTurn.moves[0];
+
+  if (!fromStep || !firstStep) return { canHop: true, canSingleStep: true };
+
+  const delta = hexSubtract(fromStep, firstStep);
+
+  const isHopping = !HEX_DIRECTION_VECTORS.some((v) => hexCompare(v, delta));
+
+  const canSingleStep = currentTurn.moves.length === 0;
+
+  return { canHop: isHopping, canSingleStep };
+}
 
 export function getMoveValidationInformation(
   board: Board | undefined,
@@ -55,7 +70,7 @@ export function getMoveValidationInformation(
   const lastMove = getTurnLastMove(currentTurn);
 
   return {
-    isValid: isMoveValid(board, lastMove, slotToGo),
+    isValid: isMoveValid(board, currentTurn, lastMove, slotToGo),
     lastMove,
     needsAnimation: true,
   };
@@ -63,6 +78,7 @@ export function getMoveValidationInformation(
 
 function isMoveValid(
   board: Board | undefined,
+  currentTurn: Turn,
   from: HexCoordinates | undefined,
   to: HexCoordinates | undefined,
 ) {
@@ -74,30 +90,36 @@ function isMoveValid(
   if (!toSlot || !toSlot.isEmpty) return false;
   if (!fromSlot || fromSlot.isEmpty) return false;
 
+  const { canHop, canSingleStep } = getAllowedMovesTypeFromTurn(currentTurn);
+
   const delta = hexSubtract(from, to);
 
-  const directionVector = HEX_DIRECTION_VECTORS.find((v) =>
-    hexCompare(v, delta),
-  );
+  if (canSingleStep) {
+    const directionVector = HEX_DIRECTION_VECTORS.find((v) =>
+      hexCompare(v, delta),
+    );
 
-  if (directionVector) return true;
+    if (directionVector) return true;
+  }
 
-  const halfDelta = hexDivide(delta, 2);
+  if (canHop) {
+    const halfDelta = hexDivide(delta, 2);
 
-  const isHoppingMove = HEX_DIRECTION_VECTORS.some((v) =>
-    hexCompare(v, halfDelta),
-  );
+    const isHoppingMove = HEX_DIRECTION_VECTORS.some((v) =>
+      hexCompare(v, halfDelta),
+    );
 
-  if (!isHoppingMove) return false;
+    if (!isHoppingMove) return false;
 
-  const intermediateHexCoords = hexSubtract(from, halfDelta);
+    const intermediateHexCoords = hexSubtract(from, halfDelta);
 
-  const intermediateSlot =
-    board[intermediateHexCoords.r][intermediateHexCoords.q];
+    const intermediateSlot =
+      board[intermediateHexCoords.r][intermediateHexCoords.q];
 
-  if (!intermediateSlot || intermediateSlot.isEmpty) return false;
+    if (intermediateSlot && !intermediateSlot.isEmpty) return true;
+  }
 
-  return true;
+  return false;
 }
 
 export function getTurnLastMove(turn: Turn | undefined) {
