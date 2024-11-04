@@ -1,3 +1,6 @@
+import { Group } from "./group";
+
+// PK: gameId
 export interface Game {
   id: string;
   name: string;
@@ -8,27 +11,27 @@ export interface Game {
   gameStatus: GameStatus;
   createdAt: number;
   updatedAt: number;
-  players: string[];
-  winner?: string;
+  groupOrder: Group[];
+  result?: string[];
 }
 
-enum GameType {
+export enum GameType {
   SINGLE_PLAYER = "SINGLE_PLAYER",
   MULTI_PLAYER = "MULTI_PLAYER",
 }
 
-enum GameMode {
+export enum GameMode {
   CLASSIC = "CLASSIC",
   DUEL = "DUEL",
   BATTLE = "BATTLE",
 }
 
-enum GameSpeed {
+export enum GameSpeed {
   RUSH = "RUSH",
   NORMAL = "NORMAL",
 }
 
-enum GameStatus {
+export enum GameStatus {
   PENDING = "PENDING",
   PLAYING = "PLAYING",
   FINISHED = "FINISHED",

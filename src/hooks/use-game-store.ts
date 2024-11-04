@@ -1,7 +1,11 @@
 /* eslint-disable no-param-reassign */
 import { Board, createEmptySlot, initializeBoard } from "@/helpers/board";
+import { initializeGame } from "@/helpers/game";
 import { hexCompare } from "@/helpers/hex";
 import { getTurnLastMove } from "@/helpers/move";
+import { Game } from "@/models/game";
+import { Group } from "@/models/group";
+import { Player } from "@/models/player";
 import { HexCoordinates, Turn } from "@/models/turn";
 
 import { v4 as uuidv4 } from "uuid";
@@ -9,11 +13,11 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 interface GameState {
+  game: Game;
   board: Board;
-  players: string[];
+  players: Player[];
   turns: Turn[];
   currentTurn: Turn;
-  playerTurn: string;
   isCreatingGame: boolean;
 }
 
@@ -31,10 +35,27 @@ export const useGame = create<GameStore>()(
 
     start: () => {
       set((state) => {
-        state.board = initializeBoard([1, 4]);
-        state.players = ["123", "456"];
+        state.board = initializeBoard([Group.GROUP_1, Group.GROUP_4]);
+        state.game = initializeGame();
+        state.players = [
+          {
+            id: "123",
+            groups: [Group.GROUP_1, Group.GROUP_4],
+            userId: "123",
+            createdAt: new Date().getTime(),
+            gameId: "123",
+            updatedAt: new Date().getTime(),
+          },
+          {
+            id: "124",
+            groups: [Group.GROUP_1, Group.GROUP_4],
+            userId: "123",
+            createdAt: new Date().getTime(),
+            gameId: "123",
+            updatedAt: new Date().getTime(),
+          },
+        ];
         state.turns = [];
-        state.playerTurn = "123";
         state.isCreatingGame = false;
       });
     },
@@ -44,19 +65,11 @@ export const useGame = create<GameStore>()(
         if (!state.currentTurn) return;
         if (!state.turns) return;
         if (!state.players) return;
-        if (!state.playerTurn) return;
-
-        const currentPlayerIndex = state.players.indexOf(state.playerTurn);
-        const nextPlayerIndex =
-          currentPlayerIndex === state.players.length - 1
-            ? 0
-            : currentPlayerIndex + 1;
 
         const turn = incomingTurn ?? state.currentTurn;
 
         state.turns = [...state.turns, turn];
         state.currentTurn = undefined;
-        state.playerTurn = state.players[nextPlayerIndex];
       });
     },
 

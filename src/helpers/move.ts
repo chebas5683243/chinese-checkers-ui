@@ -1,7 +1,78 @@
-import { Board } from "./board";
+import { Board, Slot } from "./board";
 import { hexCompare, hexDivide, hexSubtract } from "./hex";
 import { HEX_DIRECTION_VECTORS } from "@/constants/hex-directions";
+import { Group } from "@/models/group";
+import { Player } from "@/models/player";
 import { HexCoordinates, Turn } from "@/models/turn";
+
+export function checkIfIsLastMove(
+  turn: Turn | undefined,
+  move: HexCoordinates,
+) {
+  const lastMove = getTurnLastMove(turn);
+  return hexCompare(lastMove, move);
+}
+
+export function getMoveValidationInformation(
+  player: Player | undefined,
+  board: Board | undefined,
+  groupToPlay: Group | undefined,
+  currentTurn: Turn | undefined,
+  slotToGo: HexCoordinates,
+): {
+  isValid: boolean;
+  needsAnimation: boolean;
+  lastMove?: HexCoordinates;
+} {
+  if (!board) return { isValid: false, needsAnimation: false };
+
+  const isInitializingTurn = !currentTurn;
+
+  if (isInitializingTurn) {
+    const slot = board[slotToGo.r][slotToGo.q];
+
+    return {
+      isValid: checkIfIsInitialSlotValid(player, slot, groupToPlay),
+      needsAnimation: false,
+    };
+  }
+
+  const isSlotInPath = checkIfSlotInPath(currentTurn, slotToGo);
+
+  if (isSlotInPath) {
+    return {
+      isValid: true,
+      needsAnimation: false,
+    };
+  }
+
+  const lastMove = getTurnLastMove(currentTurn);
+
+  return {
+    isValid: checkIfIsMoveValid({
+      board,
+      currentTurn,
+      from: lastMove,
+      to: slotToGo,
+    }),
+    lastMove,
+    needsAnimation: true,
+  };
+}
+
+function checkIfIsInitialSlotValid(
+  player: Player | undefined,
+  slot: Slot | null,
+  groupTurn: Group | undefined,
+) {
+  if (!slot || !player || groupTurn === undefined) return false;
+
+  if (slot.group !== groupTurn) return false;
+
+  const isPlayerGroup = player.groups.includes(groupTurn);
+
+  return isPlayerGroup;
+}
 
 export function checkIfSlotInPath(
   turn: Turn | undefined,
@@ -20,68 +91,22 @@ function getFullMoves(turn: Turn | undefined): HexCoordinates[] {
   return [...fromToMerge, ...movesToMerge];
 }
 
-function getAllowedMovesTypeFromTurn(currentTurn: Turn | undefined): {
-  canHop: boolean;
-  canSingleStep: boolean;
-} {
-  if (!currentTurn) return { canHop: true, canSingleStep: true };
-
-  const fromStep = currentTurn.from;
-  const firstStep = currentTurn.moves[0];
-
-  if (!fromStep || !firstStep) return { canHop: true, canSingleStep: true };
-
-  const delta = hexSubtract(fromStep, firstStep);
-
-  const isHopping = !HEX_DIRECTION_VECTORS.some((v) => hexCompare(v, delta));
-
-  const canSingleStep = currentTurn.moves.length === 0;
-
-  return { canHop: isHopping, canSingleStep };
+export function getTurnLastMove(turn: Turn | undefined) {
+  if (!turn) return undefined;
+  return turn.moves[turn.moves.length - 1] ?? turn.from;
 }
 
-export function getMoveValidationInformation(
-  board: Board | undefined,
-  currentTurn: Turn | undefined,
-  slotToGo: HexCoordinates,
-): {
-  isValid: boolean;
-  needsAnimation: boolean;
-  lastMove?: HexCoordinates;
-} {
-  const isInitializingTurn = !currentTurn;
-
-  if (isInitializingTurn) {
-    return {
-      isValid: true,
-      needsAnimation: false,
-    };
-  }
-
-  const isSlotInPath = checkIfSlotInPath(currentTurn, slotToGo);
-
-  if (isSlotInPath) {
-    return {
-      isValid: true,
-      needsAnimation: false,
-    };
-  }
-
-  const lastMove = getTurnLastMove(currentTurn);
-
-  return {
-    isValid: isMoveValid(board, currentTurn, lastMove, slotToGo),
-    lastMove,
-    needsAnimation: true,
-  };
-}
-
-function isMoveValid(
-  board: Board | undefined,
-  currentTurn: Turn,
-  from: HexCoordinates | undefined,
-  to: HexCoordinates | undefined,
-) {
+function checkIfIsMoveValid({
+  board,
+  currentTurn,
+  from,
+  to,
+}: {
+  board: Board | undefined;
+  currentTurn: Turn;
+  from: HexCoordinates | undefined;
+  to: HexCoordinates | undefined;
+}) {
   if (!board || !from || !to) return false;
 
   const fromSlot = board[from.r][from.q];
@@ -122,15 +147,22 @@ function isMoveValid(
   return false;
 }
 
-export function getTurnLastMove(turn: Turn | undefined) {
-  if (!turn) return undefined;
-  return turn.moves[turn.moves.length - 1] ?? turn.from;
-}
+function getAllowedMovesTypeFromTurn(currentTurn: Turn | undefined): {
+  canHop: boolean;
+  canSingleStep: boolean;
+} {
+  if (!currentTurn) return { canHop: true, canSingleStep: true };
 
-export function checkIfIsLastMove(
-  turn: Turn | undefined,
-  move: HexCoordinates,
-) {
-  const lastMove = getTurnLastMove(turn);
-  return hexCompare(lastMove, move);
+  const fromStep = currentTurn.from;
+  const firstStep = currentTurn.moves[0];
+
+  if (!fromStep || !firstStep) return { canHop: true, canSingleStep: true };
+
+  const delta = hexSubtract(fromStep, firstStep);
+
+  const isHopping = !HEX_DIRECTION_VECTORS.some((v) => hexCompare(v, delta));
+
+  const canSingleStep = currentTurn.moves.length === 0;
+
+  return { canHop: isHopping, canSingleStep };
 }

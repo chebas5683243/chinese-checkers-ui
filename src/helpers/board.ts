@@ -1,11 +1,12 @@
 import { createHex } from "./hex";
 import { GROUP_COORDINATES, SLOTS_PER_ROW } from "@/constants/board";
+import { Group } from "@/models/group";
 import { HexCoordinates } from "@/models/turn";
 
 interface Slot {
   id: string;
   isEmpty: boolean;
-  group?: number;
+  group?: Group;
 }
 
 type Board = (Slot | null)[][];
@@ -31,7 +32,7 @@ function initializeSlots() {
   return board;
 }
 
-function initializeGroups(board: Board, groups: number[]) {
+function initializeGroups(board: Board, groups: Group[]) {
   const filledBoard = board;
 
   groups.forEach((group) => {

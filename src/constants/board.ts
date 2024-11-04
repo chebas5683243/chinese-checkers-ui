@@ -1,6 +1,8 @@
+import { Group } from "@/models/group";
+
 type RowRange = [number, number];
 type RowsRange = Record<number, RowRange>;
-type GroupsRowRange = Record<number, RowsRange>;
+type GroupsRowRange = Record<Group, RowsRange>;
 
 export const HEX_COORDINATES_OFFSET = [8, 8];
 
@@ -40,37 +42,37 @@ export const SLOTS_PER_ROW: RowsRange = {
  *  - The second number in the array is the x-coordinate where the group ends in that row
  */
 export const GROUP_COORDINATES: GroupsRowRange = {
-  1: {
+  [Group.GROUP_1]: {
     13: [4, 7],
     14: [4, 6],
     15: [4, 5],
     16: [4, 4],
   },
-  2: {
+  [Group.GROUP_2]: {
     9: [12, 12],
     10: [11, 12],
     11: [10, 12],
     12: [9, 12],
   },
-  3: {
+  [Group.GROUP_3]: {
     4: [13, 16],
     5: [13, 15],
     6: [13, 14],
     7: [13, 13],
   },
-  4: {
+  [Group.GROUP_4]: {
     0: [12, 12],
     1: [11, 12],
     2: [10, 12],
     3: [9, 12],
   },
-  5: {
+  [Group.GROUP_5]: {
     4: [4, 7],
     5: [4, 6],
     6: [4, 5],
     7: [4, 4],
   },
-  6: {
+  [Group.GROUP_6]: {
     9: [3, 3],
     10: [2, 3],
     11: [1, 3],
@@ -78,11 +80,11 @@ export const GROUP_COORDINATES: GroupsRowRange = {
   },
 };
 
-export const GROUP_COLORS = {
-  1: "#FF0000",
-  2: "#00FF00",
-  3: "#0000FF",
-  4: "#FFFF00",
-  5: "#FF00FF",
-  6: "#00FFFF",
+export const GROUP_COLORS: Record<Group, string> = {
+  [Group.GROUP_1]: "#FF0000",
+  [Group.GROUP_2]: "#00FF00",
+  [Group.GROUP_3]: "#0000FF",
+  [Group.GROUP_4]: "#FFFF00",
+  [Group.GROUP_5]: "#FF00FF",
+  [Group.GROUP_6]: "#00FFFF",
 };

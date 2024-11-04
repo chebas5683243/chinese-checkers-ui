@@ -3,6 +3,7 @@ import type { Slot as ISlot } from "@/helpers/board";
 import { printHex } from "@/helpers/hex";
 import { getPieceId, getSlotId } from "@/helpers/slot";
 import { cn } from "@/lib/utils";
+import { Group } from "@/models/group";
 import { HexCoordinates } from "@/models/turn";
 
 interface SlotProps {
@@ -41,7 +42,7 @@ export function Slot({
       >
         <span style={{ fontSize: "4px" }}>{printHex(hexCoords)}</span>
       </button>
-      {!!slot.group && (
+      {slot.group !== undefined && (
         <button
           onClick={onClick}
           aria-label={pieceId}
@@ -59,12 +60,12 @@ export function Slot({
                 isLastMove,
             },
             {
-              "bg-red-sphere": slot.group === 1,
-              "bg-blue-sphere": slot.group === 2,
-              "bg-yellow-sphere": slot.group === 3,
-              "bg-green-sphere": slot.group === 4,
-              "bg-white-sphere": slot.group === 5,
-              "bg-black-sphere": slot.group === 6,
+              "bg-red-sphere": slot.group === Group.GROUP_1,
+              "bg-blue-sphere": slot.group === Group.GROUP_2,
+              "bg-yellow-sphere": slot.group === Group.GROUP_3,
+              "bg-green-sphere": slot.group === Group.GROUP_4,
+              "bg-white-sphere": slot.group === Group.GROUP_5,
+              "bg-black-sphere": slot.group === Group.GROUP_6,
             },
           )}
         >

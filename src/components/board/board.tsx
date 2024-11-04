@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Slot } from "@/components/board/slot";
+import { USER_ID } from "@/constants/dummy";
 import { animateMove } from "@/helpers/animations";
 import { createHex } from "@/helpers/hex";
 import {
@@ -10,6 +11,7 @@ import {
   checkIfIsLastMove,
   getMoveValidationInformation,
 } from "@/helpers/move";
+import { getTurnInformation } from "@/helpers/turn";
 import { useGame } from "@/hooks/use-game-store";
 import { HexCoordinates } from "@/models/turn";
 
@@ -19,10 +21,22 @@ export function Board() {
     isCreatingGame,
     board,
     updateTurnMoves,
+    game,
+    players,
     currentTurn,
     confirmTurnMoves,
     turns,
   } = useGame();
+
+  const me = useMemo(
+    () => players?.find((player) => player.userId === USER_ID),
+    [players],
+  );
+
+  const turnInformation = useMemo(
+    () => getTurnInformation({ game, players, nTurns: turns?.length }),
+    [game, players, turns],
+  );
 
   useEffect(() => {
     startGame();
@@ -33,7 +47,9 @@ export function Board() {
     selectedSlot: HexCoordinates,
   ) {
     const { isValid, needsAnimation, lastMove } = getMoveValidationInformation(
+      me,
       board,
+      turnInformation?.groupTurn,
       currentTurn,
       selectedSlot,
     );

@@ -1,3 +1,4 @@
+// PK: gameId, SK: order
 export interface Turn {
   id: string;
   gameId: string;
