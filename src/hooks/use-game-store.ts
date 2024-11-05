@@ -31,6 +31,7 @@ interface GameStore extends Partial<GameState> {
 export const useGame = create<GameStore>()(
   immer((set) => ({
     // Default state
+    // TODO: gameloop
     isCreatingGame: true,
 
     start: () => {
