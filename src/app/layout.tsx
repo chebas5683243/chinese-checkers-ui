@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+
+import { SocketConnection } from "@/components/socket-connection";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -28,6 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <SocketConnection />
         {children}
       </body>
     </html>

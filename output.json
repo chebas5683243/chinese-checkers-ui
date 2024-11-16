@@ -1,0 +1,111 @@
+{
+    "Items": [
+        {
+            "employment": {
+                "M": {
+                    "income": {
+                        "M": {
+                            "range": {
+                                "S": "RANGE_3"
+                            },
+                            "currency": {
+                                "S": "PEN"
+                            }
+                        }
+                    },
+                    "employer": {
+                        "M": {
+                            "name": {
+                                "S": "SOCIEDAD PERUANA DE LA CRUZ ROJA"
+                            }
+                        }
+                    },
+                    "type": {
+                        "S": "DEPENDENT"
+                    },
+                    "sector": {
+                        "S": "OTRO"
+                    }
+                }
+            },
+            "additionalPurposes": {
+                "BOOL": true
+            },
+            "documentKey": {
+                "S": "DNI76408366"
+            },
+            "lastUpdateDate": {
+                "N": "1730741314900"
+            },
+            "motherLastName": {
+                "S": "ESCUDERO"
+            },
+            "creationDate": {
+                "N": "1730739981881"
+            },
+            "address": {
+                "M": {
+                    "number": {
+                        "S": "407"
+                    },
+                    "location": {
+                        "M": {
+                            "level1": {
+                                "S": "LIMA"
+                            },
+                            "level3": {
+                                "S": "SAN MIGUEL"
+                            },
+                            "level2": {
+                                "S": "LIMA"
+                            }
+                        }
+                    },
+                    "type": {
+                        "S": "Jirón"
+                    },
+                    "line": {
+                        "S": "INDEPENDENCIA"
+                    }
+                }
+            },
+            "birthdate": {
+                "N": "1162443600000"
+            },
+            "spouse": {
+                "M": {
+                    "name": {
+                        "S": "DASDASDAS"
+                    },
+                    "lastName": {
+                        "S": "DASDASDASD"
+                    },
+                    "middleName": {
+                        "S": ""
+                    },
+                    "motherLastName": {
+                        "S": "DASDASDASD"
+                    }
+                }
+            },
+            "documentKeyValidated": {
+                "BOOL": true
+            },
+            "civilStatus": {
+                "S": "MARRIED"
+            },
+            "termsAndConditionsDate": {
+                "N": "1730740073413"
+            },
+            "id": {
+                "S": "bba7bcf3-7604-4e30-b5af-36a8736dd79e"
+            },
+            "type": {
+                "S": "INDIVIDUAL"
+            }
+        }
+    ],
+    "Count": 1,
+    "ScannedCount": 1,
+    "ConsumedCapacity": null
+}

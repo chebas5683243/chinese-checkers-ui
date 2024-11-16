@@ -2,9 +2,9 @@ import { Z_INDEX_PIECE, Z_INDEX_SLOT } from "@/constants/z-indexes";
 import type { Slot as ISlot } from "@/helpers/board";
 import { printHex } from "@/helpers/hex";
 import { getPieceId, getSlotId } from "@/helpers/slot";
-import { cn } from "@/lib/utils";
 import { Group } from "@/models/group";
 import { HexCoordinates } from "@/models/turn";
+import { cn } from "@/utils/cn";
 
 interface SlotProps {
   slot: ISlot;
