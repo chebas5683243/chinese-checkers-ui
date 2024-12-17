@@ -14,12 +14,18 @@ export function SocketConnection() {
       console.log("Disconnected from server");
     }
 
+    function onConnectError(error: Error) {
+      console.error("Connection error", error);
+    }
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", onConnectError);
 
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
+      socket.off("connect_error", onConnectError);
     };
   }, []);
 
