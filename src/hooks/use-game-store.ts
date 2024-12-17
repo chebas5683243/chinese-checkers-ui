@@ -1,11 +1,8 @@
 /* eslint-disable no-param-reassign */
-import { Board, createEmptySlot, initializeBoard } from "@/helpers/board";
-import { initializeGame } from "@/helpers/game";
+import { createEmptySlot } from "@/helpers/board";
 import { hexCompare } from "@/helpers/hex";
 import { getTurnLastMove } from "@/helpers/move";
-import { Game } from "@/models/game";
-import { Group } from "@/models/group";
-import { Player } from "@/models/player";
+import { Game, GameStatus } from "@/models/game";
 import { HexCoordinates, Turn } from "@/models/turn";
 
 import { v4 as uuidv4 } from "uuid";
@@ -14,62 +11,53 @@ import { immer } from "zustand/middleware/immer";
 
 interface GameState {
   game: Game;
-  board: Board;
-  players: Player[];
-  turns: Turn[];
+  isAnimating: boolean;
   currentTurn: Turn;
-  isCreatingGame: boolean;
 }
 
 interface GameStore extends Partial<GameState> {
-  start: () => void;
-  confirmTurnMoves: (incomingTurn?: Turn) => void;
+  setupGame: (game: Game) => void;
+  updateGameStatus: (status: GameStatus) => void;
+  saveTurn: (incomingTurn?: Turn) => void;
   cancelTurnMoves: () => void;
   updateTurnMoves: (slot: HexCoordinates) => void;
 }
 
 export const useGame = create<GameStore>()(
   immer((set) => ({
-    // Default state
-    isCreatingGame: true,
+    game: undefined,
+    isAnimating: false,
+    currentTurn: undefined,
 
-    start: () => {
+    setupGame: (game: Game) => {
       set((state) => {
-        state.board = initializeBoard([Group.GROUP_1, Group.GROUP_4]);
-        state.game = initializeGame();
-        state.players = [
-          {
-            id: "123",
-            groups: [Group.GROUP_1, Group.GROUP_4],
-            userId: "123",
-            createdAt: new Date().getTime(),
-            gameId: "123",
-            updatedAt: new Date().getTime(),
-          },
-          {
-            id: "124",
-            groups: [Group.GROUP_1, Group.GROUP_4],
-            userId: "123",
-            createdAt: new Date().getTime(),
-            gameId: "123",
-            updatedAt: new Date().getTime(),
-          },
-        ];
-        state.turns = [];
-        state.isCreatingGame = false;
+        state.game = game;
       });
     },
 
-    confirmTurnMoves: (incomingTurn?: Turn) => {
+    updateGameStatus: (status) => {
+      set(({ game }) => {
+        if (!game) return;
+        game.status = status;
+      });
+    },
+
+    toggleAnimation: () => {
       set((state) => {
-        if (!state.currentTurn) return;
-        if (!state.turns) return;
-        if (!state.players) return;
+        state.isAnimating = !state.isAnimating;
+      });
+    },
 
-        const turn = incomingTurn ?? state.currentTurn;
+    saveTurn: (incomingTurn?: Turn) => {
+      set(({ game, currentTurn }) => {
+        if (!game || !game.turns || !game.players) return;
 
-        state.turns = [...state.turns, turn];
-        state.currentTurn = undefined;
+        const turn = incomingTurn ?? currentTurn;
+
+        if (!turn) return;
+
+        game.turns = [...game.turns, turn];
+        currentTurn = undefined;
       });
     },
 
@@ -80,42 +68,41 @@ export const useGame = create<GameStore>()(
     },
 
     updateTurnMoves: (selectedSlot: HexCoordinates) => {
-      set((state) => {
-        if (!state.turns) return;
-        if (!state.board) return;
+      set(({ game, currentTurn }) => {
+        if (!game || !game.board || !game.turns) return;
 
-        if (!state.currentTurn) {
-          state.currentTurn = {
+        if (!currentTurn) {
+          currentTurn = {
             id: uuidv4(),
             gameId: "123",
             createdAt: new Date().getTime(),
             from: selectedSlot,
-            order: state.turns.length + 1,
+            order: game.turns.length + 1,
             moves: [],
           };
           return;
         }
 
-        const { moves } = state.currentTurn;
+        const { moves } = currentTurn;
 
-        const lastMove = getTurnLastMove(state.currentTurn)!;
+        const lastMove = getTurnLastMove(currentTurn)!;
 
-        const initialSlot = state.board[lastMove.r][lastMove.q];
+        const initialSlot = game.board[lastMove.r][lastMove.q];
 
-        state.board[lastMove.r][lastMove.q] = createEmptySlot(lastMove);
-        state.board[selectedSlot.r][selectedSlot.q] = {
+        game.board[lastMove.r][lastMove.q] = createEmptySlot(lastMove);
+        game.board[selectedSlot.r][selectedSlot.q] = {
           isEmpty: initialSlot!.isEmpty,
           group: initialSlot!.group,
           id: `${selectedSlot.r}-${selectedSlot.q}`,
         };
 
-        if (hexCompare(state.currentTurn.from, selectedSlot)) {
+        if (hexCompare(currentTurn.from, selectedSlot)) {
           if (moves.length === 0) {
-            state.currentTurn = undefined;
+            currentTurn = undefined;
             return;
           }
 
-          state.currentTurn.moves = [];
+          currentTurn.moves = [];
           return;
         }
 
@@ -124,11 +111,11 @@ export const useGame = create<GameStore>()(
         );
 
         if (previuousIndex !== -1) {
-          state.currentTurn.moves = moves.slice(0, previuousIndex + 1);
+          currentTurn.moves = moves.slice(0, previuousIndex + 1);
           return;
         }
 
-        state.currentTurn.moves = [...state.currentTurn.moves, selectedSlot];
+        currentTurn.moves = [...currentTurn.moves, selectedSlot];
       });
     },
   })),

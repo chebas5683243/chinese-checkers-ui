@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-
-import { Slot } from "@/components/board/slot";
-import { USER_ID } from "@/constants/dummy";
+import { Slot } from "@/components/room/slot";
+import { USER_ID_COOKIE } from "@/constants/user";
 import { animateMove } from "@/helpers/animations";
 import { createHex } from "@/helpers/hex";
 import {
@@ -14,38 +12,28 @@ import {
 import { getTurnInformation } from "@/helpers/turn";
 import { useGame } from "@/hooks/use-game-store";
 import { HexCoordinates } from "@/models/turn";
+import { getCookieValue } from "@/utils/cookie";
 
 export function Board() {
-  const {
-    start: startGame,
-    isCreatingGame,
-    board,
-    updateTurnMoves,
-    game,
-    players,
-    currentTurn,
-    confirmTurnMoves,
-    turns,
-  } = useGame();
+  const { updateTurnMoves, game, currentTurn, saveTurn } = useGame();
 
-  const me = useMemo(
-    () => players?.find((player) => player.userId === USER_ID),
-    [players],
-  );
+  if (!game) return null;
 
-  const turnInformation = useMemo(
-    () => getTurnInformation({ game, players, nTurns: turns?.length }),
-    [game, players, turns],
-  );
+  const { players, turns, board } = game;
 
-  useEffect(() => {
-    startGame();
-  }, [startGame]);
+  function getMyPlayerInformation() {
+    const userId = getCookieValue(USER_ID_COOKIE);
+    return players?.find((player) => player.userId === userId);
+  }
 
   async function onSlotClick(
     isLastMove: boolean,
     selectedSlot: HexCoordinates,
   ) {
+    const me = getMyPlayerInformation();
+
+    const turnInformation = getTurnInformation(game);
+
     const { isValid, needsAnimation, lastMove } = getMoveValidationInformation(
       me,
       board,
@@ -61,14 +49,14 @@ export function Board() {
     }
 
     if (isLastMove) {
-      confirmTurnMoves();
+      saveTurn();
       return;
     }
 
     updateTurnMoves(selectedSlot);
   }
 
-  if (isCreatingGame || !board) {
+  if (!board) {
     return <div>Cargando</div>;
   }
 

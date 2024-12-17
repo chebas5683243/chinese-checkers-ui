@@ -1,24 +1,15 @@
 import { Game } from "@/models/game";
-import { Player } from "@/models/player";
 
-export function getTurnInformation({
-  game,
-  nTurns,
-  players,
-}: {
-  game: Game | undefined;
-  nTurns: number | undefined;
-  players: Player[] | undefined;
-}) {
-  if (!game || !players || nTurns === undefined) {
+export function getTurnInformation(game: Game | undefined) {
+  if (!game || !game.players || !game.turns) {
     return undefined;
   }
 
-  const { groupOrder } = game;
+  const { groupOrder, turns } = game;
 
-  const groupTurn = groupOrder[nTurns % groupOrder.length];
+  const groupTurn = groupOrder[turns.length % groupOrder.length];
 
-  const playerTurn = players.find((player) =>
+  const playerTurn = game.players.find((player) =>
     player.groups.includes(groupTurn),
   )!;
 
