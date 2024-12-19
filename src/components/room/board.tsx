@@ -10,27 +10,36 @@ import {
   getMoveValidationInformation,
 } from "@/helpers/move";
 import { getTurnInformation } from "@/helpers/turn";
+import { useHandleIncomingMove } from "@/hooks/room/use-handle-incoming-move";
 import { useGame } from "@/hooks/use-game-store";
 import { HexCoordinates } from "@/models/turn";
 import { getCookieValue } from "@/utils/cookie";
 
+import { useShallow } from "zustand/react/shallow";
+
 export function Board() {
-  const { updateTurnMoves, game, currentTurn, saveTurn } = useGame();
+  const { updateTurnMoves, game, currentTurn, saveTurn, toggleAnimation } =
+    useGame(
+      useShallow((state) => ({
+        updateTurnMoves: state.updateTurnMoves,
+        game: state.game,
+        currentTurn: state.currentTurn,
+        saveTurn: state.saveTurn,
+        toggleAnimation: state.toggleAnimation,
+      })),
+    );
 
-  if (!game) return null;
+  useHandleIncomingMove();
 
-  const { players, turns, board } = game;
-
-  function getMyPlayerInformation() {
-    const userId = getCookieValue(USER_ID_COOKIE);
-    return players?.find((player) => player.userId === userId);
-  }
+  const { players, turns, board } = game!;
 
   async function onSlotClick(
     isLastMove: boolean,
     selectedSlot: HexCoordinates,
   ) {
-    const me = getMyPlayerInformation();
+    const me = players?.find(
+      (player) => player.userId === getCookieValue(USER_ID_COOKIE),
+    );
 
     const turnInformation = getTurnInformation(game);
 
@@ -45,7 +54,9 @@ export function Board() {
     if (!isValid) return;
 
     if (needsAnimation && lastMove) {
+      toggleAnimation();
       await animateMove(lastMove, selectedSlot);
+      toggleAnimation();
     }
 
     if (isLastMove) {
