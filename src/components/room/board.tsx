@@ -23,6 +23,7 @@ export function Board() {
     currentTurn,
     updateTurnMoves,
     saveCurrentTurn,
+    resetCurrentTurn,
     toggleAnimation,
   } = useGame(
     useShallow((state) => ({
@@ -30,6 +31,7 @@ export function Board() {
       game: state.game,
       currentTurn: state.currentTurn,
       saveCurrentTurn: state.saveCurrentTurn,
+      resetCurrentTurn: state.resetCurrentTurn,
       toggleAnimation: state.toggleAnimation,
       me: state.me,
     })),
@@ -64,15 +66,21 @@ export function Board() {
     }
 
     if (isLastMove) {
-      handleMoveCompletion();
+      handleTurnConfirmation();
       return;
     }
 
     updateTurnMoves(selectedSlot);
   }
 
-  function handleMoveCompletion() {
-    if (!game || !currentTurn || currentTurn.moves.length === 0) return;
+  function handleTurnConfirmation() {
+    if (!game || !currentTurn) return;
+
+    if (currentTurn.moves.length === 0) {
+      resetCurrentTurn();
+      return;
+    }
+
     // TODO: boardhash
     socket.emit("sendMove", game.id, currentTurn, "boardHash", (payload) => {
       if (payload.status === "error") {

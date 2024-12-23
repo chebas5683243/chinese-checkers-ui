@@ -1,4 +1,4 @@
-import { SOCKET_URL } from "@/config/env";
+import { SERVICE_URL } from "@/config/env";
 import { Game } from "@/models/game";
 import { Turn } from "@/models/turn";
 
@@ -51,7 +51,7 @@ interface EmitEvents {
 
 type SocketClient = Socket<ListenEvents, EmitEvents>;
 
-export const socket: SocketClient = io(SOCKET_URL, {
+export const socket: SocketClient = io(SERVICE_URL, {
   withCredentials: true,
   hostname: "sweet-arbitrary-contained-professional.trycloudflare.com",
 });

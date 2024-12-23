@@ -27,6 +27,7 @@ interface GameStore extends GameState {
   setupGame: (game: Game) => void;
   setMe: (player: Player) => void;
   updateGameStatus: (status: GameStatus) => void;
+  resetCurrentTurn: () => void;
   saveCurrentTurn: () => void;
   saveIncomingTurn: (turn: Turn) => void;
   cancelTurnMoves: () => void;
@@ -73,6 +74,12 @@ export const useGame = create<GameStore>()(
       set(({ game }) => {
         if (!game) return;
         game.status = status;
+      });
+    },
+
+    resetCurrentTurn: () => {
+      set((state) => {
+        state.currentTurn = undefined;
       });
     },
 
