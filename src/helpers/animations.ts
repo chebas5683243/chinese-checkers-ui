@@ -1,6 +1,6 @@
 import { getPieceId, getSlotId } from "./slot";
 import { Z_INDEX_MOVING_PIECE } from "@/constants/z-indexes";
-import { HexCoordinates } from "@/models/turn";
+import { HexCoordinates, Turn } from "@/models/turn";
 
 export async function animateMove(from: HexCoordinates, to: HexCoordinates) {
   const piece = document.getElementById(getPieceId(from));
@@ -19,14 +19,48 @@ export async function animateMove(from: HexCoordinates, to: HexCoordinates) {
   const animation = piece.animate(
     [
       { transform: `scale(1) translate(0px, 0px)` },
-      { transform: `scale(1.5) translate(${deltaX / 4}px, ${deltaY / 4}px)` },
       { transform: `scale(1) translate(${deltaX}px, ${deltaY}px)` },
     ],
     {
-      duration: 1000,
-      easing: "ease",
+      duration: 500,
+      easing: "ease-in",
     },
   );
+
+  await animation.finished;
+}
+
+export async function animateIncomingTurn(turn: Turn) {
+  const animationSequence = [{ transform: `scale(1) translate(0px, 0px)` }];
+  const animationOptions = {
+    duration: 500 * turn.moves.length,
+    easing: "ease-in",
+  };
+
+  const piece = document.getElementById(getPieceId(turn.from));
+
+  if (!piece) return;
+
+  piece.style.zIndex = Z_INDEX_MOVING_PIECE.toString();
+
+  const baseRect = piece.getBoundingClientRect();
+
+  for (let i = 0; i < turn.moves.length; i += 1) {
+    const slot = document.getElementById(getSlotId(turn.moves[i]));
+
+    if (!slot) return;
+
+    const slotRect = slot.getBoundingClientRect();
+
+    const deltaXPieceFromSlot = slotRect.x - baseRect.x;
+    const deltaYPieceFromSlot = slotRect.y - baseRect.y;
+
+    animationSequence.push({
+      transform: `scale(1) translate(${deltaXPieceFromSlot}px, ${deltaYPieceFromSlot}px)`,
+    });
+  }
+
+  const animation = piece.animate(animationSequence, animationOptions);
 
   await animation.finished;
 }

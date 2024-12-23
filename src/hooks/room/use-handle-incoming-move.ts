@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import { useGame } from "../use-game-store";
-import { animateMove } from "@/helpers/animations";
+import { animateIncomingTurn } from "@/helpers/animations";
 import { socket } from "@/lib/socket-io";
 import { Turn } from "@/models/turn";
 
@@ -18,7 +18,7 @@ export const useHandleIncomingMove = () => {
   useEffect(() => {
     async function onOpponentMove(turn: Turn) {
       toggleAnimation();
-      await animateMove(turn.from, turn.moves[turn.moves.length - 1]);
+      await animateIncomingTurn(turn);
       toggleAnimation();
       saveIncomingTurn(turn);
     }
