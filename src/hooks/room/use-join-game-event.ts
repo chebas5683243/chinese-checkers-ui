@@ -7,10 +7,12 @@ import { RoomMessageType } from "@/models/message";
 import { useShallow } from "zustand/react/shallow";
 
 export const useJoinGameEvent = (gameId: string) => {
-  const { setupGame, addRoomMessage } = useGame(
+  const { setupGame, addRoomMessage, setMe, addGameConnection } = useGame(
     useShallow((state) => ({
       setupGame: state.setupGame,
       addRoomMessage: state.addRoomMessage,
+      setMe: state.setMe,
+      addGameConnection: state.addGameConnection,
     })),
   );
 
@@ -29,10 +31,28 @@ export const useJoinGameEvent = (gameId: string) => {
         content: "You have joined the room",
       });
       setupGame(response.data.game);
+
+      response.data.connections.forEach((player) => {
+        addGameConnection(player);
+      });
+
+      const userConnection = response.data.connections.find(
+        (player) => player.socketId === socket.id,
+      );
+
+      if (!userConnection) return;
+
+      const me = response.data.game.players?.find(
+        (player) => player.userId === userConnection.userId,
+      );
+
+      if (!me) return;
+
+      setMe(me);
     });
 
     return () => {
       socket.emit("leaveGame", gameId);
     };
-  }, [gameId, setupGame, addRoomMessage]);
+  }, [gameId, setupGame, addRoomMessage, setMe, addGameConnection]);
 };

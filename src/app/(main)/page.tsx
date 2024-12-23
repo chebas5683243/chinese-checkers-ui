@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { API_URL } from "@/config/env";
 
 export default function Home() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function Home() {
 
   async function onGameCreation() {
     try {
-      const response = await fetch("http://localhost:4174/game", {
+      const response = await fetch(`${API_URL}/game`, {
         method: "POST",
         credentials: "include",
       });

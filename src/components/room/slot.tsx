@@ -2,6 +2,7 @@ import { Z_INDEX_PIECE, Z_INDEX_SLOT } from "@/constants/z-indexes";
 import type { Slot as ISlot } from "@/helpers/board";
 import { printHex } from "@/helpers/hex";
 import { getPieceId, getSlotId } from "@/helpers/slot";
+import { useGame } from "@/hooks/use-game-store";
 import { Group } from "@/models/group";
 import { HexCoordinates } from "@/models/turn";
 import { cn } from "@/utils/cn";
@@ -21,12 +22,15 @@ export function Slot({
   hexCoords,
   isLastMove,
 }: SlotProps) {
+  const disabled = useGame((state) => state.isAnimating);
+
   const pieceId = getPieceId(hexCoords);
   const slotId = getSlotId(hexCoords);
 
   return (
     <div className="relative">
       <button
+        disabled={disabled}
         onClick={onClick}
         aria-label={slotId}
         id={slotId}
@@ -44,6 +48,7 @@ export function Slot({
       </button>
       {slot.group !== undefined && (
         <button
+          disabled={disabled}
           onClick={onClick}
           aria-label={pieceId}
           id={pieceId}

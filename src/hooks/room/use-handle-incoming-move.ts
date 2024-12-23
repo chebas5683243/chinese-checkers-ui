@@ -8,9 +8,9 @@ import { Turn } from "@/models/turn";
 import { useShallow } from "zustand/react/shallow";
 
 export const useHandleIncomingMove = () => {
-  const { saveTurn, toggleAnimation } = useGame(
+  const { saveIncomingTurn, toggleAnimation } = useGame(
     useShallow((state) => ({
-      saveTurn: state.saveTurn,
+      saveIncomingTurn: state.saveIncomingTurn,
       toggleAnimation: state.toggleAnimation,
     })),
   );
@@ -20,7 +20,7 @@ export const useHandleIncomingMove = () => {
       toggleAnimation();
       await animateMove(turn.from, turn.moves[turn.moves.length - 1]);
       toggleAnimation();
-      saveTurn(turn);
+      saveIncomingTurn(turn);
     }
 
     socket.on("opponentMove", onOpponentMove);
@@ -28,5 +28,5 @@ export const useHandleIncomingMove = () => {
     return () => {
       socket.off("opponentMove", onOpponentMove);
     };
-  }, [saveTurn, toggleAnimation]);
+  }, [saveIncomingTurn, toggleAnimation]);
 };

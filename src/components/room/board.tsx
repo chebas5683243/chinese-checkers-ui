@@ -1,7 +1,6 @@
 "use client";
 
 import { Slot } from "@/components/room/slot";
-import { USER_ID_COOKIE } from "@/constants/user";
 import { animateMove } from "@/helpers/animations";
 import { createHex } from "@/helpers/hex";
 import {
@@ -12,36 +11,41 @@ import {
 import { getTurnInformation } from "@/helpers/turn";
 import { useHandleIncomingMove } from "@/hooks/room/use-handle-incoming-move";
 import { useGame } from "@/hooks/use-game-store";
+import { socket } from "@/lib/socket-io";
 import { HexCoordinates } from "@/models/turn";
-import { getCookieValue } from "@/utils/cookie";
 
 import { useShallow } from "zustand/react/shallow";
 
 export function Board() {
-  const { updateTurnMoves, game, currentTurn, saveTurn, toggleAnimation } =
-    useGame(
-      useShallow((state) => ({
-        updateTurnMoves: state.updateTurnMoves,
-        game: state.game,
-        currentTurn: state.currentTurn,
-        saveTurn: state.saveTurn,
-        toggleAnimation: state.toggleAnimation,
-      })),
-    );
+  const {
+    game,
+    me,
+    currentTurn,
+    updateTurnMoves,
+    saveCurrentTurn,
+    toggleAnimation,
+  } = useGame(
+    useShallow((state) => ({
+      updateTurnMoves: state.updateTurnMoves,
+      game: state.game,
+      currentTurn: state.currentTurn,
+      saveCurrentTurn: state.saveCurrentTurn,
+      toggleAnimation: state.toggleAnimation,
+      me: state.me,
+    })),
+  );
 
   useHandleIncomingMove();
 
-  const { players, turns, board } = game!;
+  const { turns, board } = game!;
 
   async function onSlotClick(
     isLastMove: boolean,
     selectedSlot: HexCoordinates,
   ) {
-    const me = players?.find(
-      (player) => player.userId === getCookieValue(USER_ID_COOKIE),
-    );
-
     const turnInformation = getTurnInformation(game);
+
+    if (!me || !turnInformation) return;
 
     const { isValid, needsAnimation, lastMove } = getMoveValidationInformation(
       me,
@@ -60,11 +64,23 @@ export function Board() {
     }
 
     if (isLastMove) {
-      saveTurn();
+      handleMoveCompletion();
       return;
     }
 
     updateTurnMoves(selectedSlot);
+  }
+
+  function handleMoveCompletion() {
+    if (!game || !currentTurn || currentTurn.moves.length === 0) return;
+    // TODO: boardhash
+    socket.emit("sendMove", game.id, currentTurn, "boardHash", (payload) => {
+      if (payload.status === "error") {
+        console.error(payload.error);
+      } else {
+        saveCurrentTurn();
+      }
+    });
   }
 
   if (!board) {

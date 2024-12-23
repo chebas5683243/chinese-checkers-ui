@@ -8,11 +8,19 @@ import { RoomMessageType } from "@/models/message";
 import { useShallow } from "zustand/react/shallow";
 
 export const useGameStatusEvents = () => {
-  const { setupGame, updateGameStatus, addRoomMessage } = useGame(
+  const {
+    gameConnections,
+    setupGame,
+    updateGameStatus,
+    addRoomMessage,
+    setMe,
+  } = useGame(
     useShallow((state) => ({
       updateGameStatus: state.updateGameStatus,
       setupGame: state.setupGame,
       addRoomMessage: state.addRoomMessage,
+      gameConnections: state.gameConnections,
+      setMe: state.setMe,
     })),
   );
 
@@ -40,6 +48,20 @@ export const useGameStatusEvents = () => {
         content: "Game started",
       });
       setupGame(game);
+
+      const userConnection = gameConnections.find(
+        (gConn) => gConn.socketId === socket.id,
+      );
+
+      if (!userConnection) return;
+
+      const me = game.players?.find(
+        (player) => player.userId === userConnection.userId,
+      );
+
+      if (!me) return;
+
+      setMe(me);
     }
 
     socket.on("gameStarted", onGameStarted);
@@ -47,5 +69,5 @@ export const useGameStatusEvents = () => {
     return () => {
       socket.off("gameStarted", onGameStarted);
     };
-  }, [setupGame, addRoomMessage]);
+  }, [setupGame, addRoomMessage, gameConnections, setMe]);
 };

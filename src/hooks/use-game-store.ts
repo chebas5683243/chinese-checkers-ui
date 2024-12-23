@@ -2,9 +2,11 @@
 import { createEmptySlot } from "@/helpers/board";
 import { hexCompare } from "@/helpers/hex";
 import { getTurnLastMove } from "@/helpers/move";
+import { getTurnInformation } from "@/helpers/turn";
 import { GameConnection } from "@/lib/socket-io";
 import { Game, GameStatus } from "@/models/game";
 import { RoomMessage, RoomMessageType } from "@/models/message";
+import { Player } from "@/models/player";
 import { HexCoordinates, Turn } from "@/models/turn";
 import { getUUID } from "@/utils/random";
 
@@ -13,6 +15,7 @@ import { immer } from "zustand/middleware/immer";
 
 interface GameState {
   game: Game | undefined;
+  me: Player | undefined;
   currentTurn: Turn | undefined;
   isAnimating: boolean;
   messages: RoomMessage[];
@@ -20,9 +23,12 @@ interface GameState {
 }
 
 interface GameStore extends GameState {
+  reset: () => void;
   setupGame: (game: Game) => void;
+  setMe: (player: Player) => void;
   updateGameStatus: (status: GameStatus) => void;
-  saveTurn: (incomingTurn?: Turn) => void;
+  saveCurrentTurn: () => void;
+  saveIncomingTurn: (turn: Turn) => void;
   cancelTurnMoves: () => void;
   updateTurnMoves: (slot: HexCoordinates) => void;
   toggleAnimation: () => void;
@@ -34,14 +40,32 @@ interface GameStore extends GameState {
 export const useGame = create<GameStore>()(
   immer((set) => ({
     game: undefined,
+    me: undefined,
     currentTurn: undefined,
     isAnimating: false,
     messages: [],
     gameConnections: [],
 
+    reset: () => {
+      set((state) => {
+        state.game = undefined;
+        state.me = undefined;
+        state.currentTurn = undefined;
+        state.isAnimating = false;
+        state.messages = [];
+        state.gameConnections = [];
+      });
+    },
+
     setupGame: (game: Game) => {
       set((state) => {
         state.game = game;
+      });
+    },
+
+    setMe: (player: Player) => {
+      set((state) => {
+        state.me = player;
       });
     },
 
@@ -52,16 +76,38 @@ export const useGame = create<GameStore>()(
       });
     },
 
-    saveTurn: (incomingTurn?: Turn) => {
-      set(({ game, currentTurn }) => {
-        if (!game || !game.turns || !game.players) return;
+    saveCurrentTurn: () => {
+      set((state) => {
+        if (!state.game || !state.currentTurn || !state.game.turns) {
+          return;
+        }
 
-        const turn = incomingTurn ?? currentTurn;
+        state.game.turns = [...state.game.turns, state.currentTurn];
+        state.currentTurn = undefined;
+      });
+    },
 
-        if (!turn) return;
+    saveIncomingTurn: (turn: Turn) => {
+      set((state) => {
+        if (!state.game || !state.game.turns || !state.game.board || !turn) {
+          return;
+        }
 
-        game.turns = [...game.turns, turn];
-        currentTurn = undefined;
+        const turnInfo = getTurnInformation(state.game);
+
+        if (turnInfo === undefined) {
+          return;
+        }
+
+        state.game.turns = [...state.game.turns, turn];
+        state.game.board[turn.from.r][turn.from.q] = createEmptySlot(turn.from);
+
+        const lastMove = turn.moves[turn.moves.length - 1];
+        state.game.board[lastMove.r][lastMove.q] = {
+          isEmpty: false,
+          group: turnInfo.groupTurn,
+          id: `${lastMove.r}-${lastMove.q}`,
+        };
       });
     },
 
@@ -72,41 +118,43 @@ export const useGame = create<GameStore>()(
     },
 
     updateTurnMoves: (selectedSlot: HexCoordinates) => {
-      set(({ game, currentTurn }) => {
-        if (!game || !game.board || !game.turns) return;
+      set((state) => {
+        if (!state.game || !state.game.board || !state.game.turns) {
+          return;
+        }
 
-        if (!currentTurn) {
-          currentTurn = {
+        if (!state.currentTurn) {
+          state.currentTurn = {
             id: getUUID(),
             gameId: "123",
             createdAt: new Date().getTime(),
             from: selectedSlot,
-            order: game.turns.length + 1,
+            order: state.game.turns.length + 1,
             moves: [],
           };
           return;
         }
 
-        const { moves } = currentTurn;
+        const { moves } = state.currentTurn;
 
-        const lastMove = getTurnLastMove(currentTurn)!;
+        const lastMove = getTurnLastMove(state.currentTurn)!;
 
-        const initialSlot = game.board[lastMove.r][lastMove.q];
+        const initialSlot = state.game.board[lastMove.r][lastMove.q];
 
-        game.board[lastMove.r][lastMove.q] = createEmptySlot(lastMove);
-        game.board[selectedSlot.r][selectedSlot.q] = {
+        state.game.board[lastMove.r][lastMove.q] = createEmptySlot(lastMove);
+        state.game.board[selectedSlot.r][selectedSlot.q] = {
           isEmpty: initialSlot!.isEmpty,
           group: initialSlot!.group,
           id: `${selectedSlot.r}-${selectedSlot.q}`,
         };
 
-        if (hexCompare(currentTurn.from, selectedSlot)) {
+        if (hexCompare(state.currentTurn.from, selectedSlot)) {
           if (moves.length === 0) {
-            currentTurn = undefined;
+            state.currentTurn = undefined;
             return;
           }
 
-          currentTurn.moves = [];
+          state.currentTurn.moves = [];
           return;
         }
 
@@ -115,11 +163,11 @@ export const useGame = create<GameStore>()(
         );
 
         if (previuousIndex !== -1) {
-          currentTurn.moves = moves.slice(0, previuousIndex + 1);
+          state.currentTurn.moves = moves.slice(0, previuousIndex + 1);
           return;
         }
 
-        currentTurn.moves = [...currentTurn.moves, selectedSlot];
+        state.currentTurn.moves = [...state.currentTurn.moves, selectedSlot];
       });
     },
 

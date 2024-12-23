@@ -41,7 +41,12 @@ interface EmitEvents {
     roomId: string,
     ack: Acknowledgement<{ game: Game }>,
   ) => Promise<void>;
-  sendMove: (roomId: string, boardHash: string) => Promise<void>;
+  sendMove: (
+    roomId: string,
+    turn: Turn,
+    boardHash: string,
+    ack: Acknowledgement<void>,
+  ) => Promise<void>;
 }
 
 type SocketClient = Socket<ListenEvents, EmitEvents>;

@@ -11,7 +11,11 @@ export function getTurnInformation(game: Game | undefined) {
 
   const playerTurn = game.players.find((player) =>
     player.groups.includes(groupTurn),
-  )!;
+  );
+
+  if (!playerTurn) {
+    return undefined;
+  }
 
   return {
     groupTurn,
