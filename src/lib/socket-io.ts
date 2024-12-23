@@ -53,4 +53,5 @@ type SocketClient = Socket<ListenEvents, EmitEvents>;
 
 export const socket: SocketClient = io(SOCKET_URL, {
   withCredentials: true,
+  hostname: "sweet-arbitrary-contained-professional.trycloudflare.com",
 });
