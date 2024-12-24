@@ -39,7 +39,7 @@ export function Board() {
 
   useHandleIncomingMove();
 
-  const { turns, board } = game!;
+  const { board } = game!;
 
   async function onSlotClick(
     isLastMove: boolean,
@@ -123,20 +123,6 @@ export function Board() {
           })}
         </div>
       ))}
-      <div>Turns</div>
-      <div>
-        {turns?.map((turn) => (
-          <div key={turn.id}>{`${turn.from.q} - ${turn.from.r}`}</div>
-        ))}
-      </div>
-      <div>Current Move</div>
-      <div>{`${currentTurn?.from.q} - ${currentTurn?.from.r}`}</div>
-      <div>Moves</div>
-      <div>
-        {currentTurn?.moves.map((move) => (
-          <div key={`${move.q} - ${move.r}`}>{`${move.q} - ${move.r}`}</div>
-        ))}
-      </div>
     </div>
   );
 }

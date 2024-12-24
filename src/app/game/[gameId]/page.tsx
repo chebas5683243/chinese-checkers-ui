@@ -34,26 +34,6 @@ export default function GameRoom() {
       <div className="flex justify-center w-full">
         <Room />
       </div>
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-col gap-2">
-          <h2>Messages</h2>
-          <div className="flex flex-col gap-2">
-            {messages.map((message, index) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <div key={index}>{message.content}</div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <h2>Players</h2>
-          <div className="flex flex-col gap-2">
-            {connectedUsers.map((userId) => (
-              <div key={userId}>{userId.slice(0, 6)}</div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
