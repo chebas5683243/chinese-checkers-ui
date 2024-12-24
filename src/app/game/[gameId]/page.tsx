@@ -3,26 +3,13 @@
 import { useParams } from "next/navigation";
 
 import { Room } from "@/components/room/room";
-import { useConnectedUsers } from "@/hooks/room/use-connected-users";
 import { useGameStatusEvents } from "@/hooks/room/use-game-status-events";
 import { useJoinGameEvent } from "@/hooks/room/use-join-game-event";
 import { useResetOnLeave } from "@/hooks/room/use-reset-on-leave";
 import { useUserConnectionEvents } from "@/hooks/room/use-user-connection-events";
-import { useGame } from "@/hooks/use-game-store";
-
-import { useShallow } from "zustand/react/shallow";
 
 export default function GameRoom() {
   const { gameId } = useParams<{ gameId: string }>();
-
-  const { messages } = useGame(
-    useShallow((state) => ({
-      messages: state.messages,
-      gameConnections: state.gameConnections,
-    })),
-  );
-
-  const connectedUsers = useConnectedUsers();
 
   useJoinGameEvent(gameId);
   useUserConnectionEvents();
